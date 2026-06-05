@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solviq — Lead Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0f11;
+    --surface: #16181c;
+    --surface2: #1e2026;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0ee;
+    --muted: #7a7d85;
+    --accent: #4ade80;
+    --accent-dim: rgba(74,222,128,0.12);
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.12);
+    --amber: #fbbf24;
+    --amber-dim: rgba(251,191,36,0.12);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.1);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.6; }
+
+  /* Layout */
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+  header { border-bottom: 1px solid var(--border); padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 10; }
+  .logo { font-family: var(--mono); font-weight: 500; font-size: 15px; letter-spacing: -0.3px; color: var(--text); }
+  .logo span { color: var(--accent); }
+  main { flex: 1; padding: 28px; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 20px; }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .stat-val { font-size: 28px; font-family: var(--mono); font-weight: 500; line-height: 1; }
+  .stat-val.a { color: var(--accent); }
+  .stat-val.b { color: var(--blue); }
+  .stat-val.c { color: var(--muted); }
+
+  /* Panels */
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+  .panel-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .panel-title .tag { font-size: 11px; color: var(--muted); font-weight: 400; background: var(--surface2); padding: 2px 8px; border-radius: 20px; border: 1px solid var(--border); }
+
+  /* Forms */
+  .form-grid { display: grid; gap: 10px; }
+  .form-grid.cols-5 { grid-template-columns: 2fr 1fr 1fr 1fr 1fr; }
+  .form-grid.cols-4 { grid-template-columns: 2fr 1fr 1fr auto; }
+  .form-grid.cols-2 { grid-template-columns: 1fr auto; }
+  label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; }
+  input, select, textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius);
+    color: var(--text); font-family: var(--font); font-size: 13px; padding: 8px 10px;
+    outline: none; transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: rgba(74,222,128,0.4); }
+  textarea { resize: vertical; min-height: 72px; }
+  select option { background: #1e2026; }
+
+  /* Buttons */
+  btn, .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius); font-family: var(--font);
+    font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border2);
+    background: var(--surface2); color: var(--text); transition: all 0.15s; white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--border2); background: #252830; }
+  .btn:active { transform: scale(0.98); }
+  .btn.primary { background: var(--accent-dim); border-color: rgba(74,222,128,0.3); color: var(--accent); }
+  .btn.primary:hover { background: rgba(74,222,128,0.18); }
+  .btn.danger { color: var(--red); border-color: rgba(248,113,113,0.2); }
+  .btn.danger:hover { background: var(--red-dim); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  /* Toolbar */
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .toolbar input { flex: 1; min-width: 160px; }
+  .toolbar select { width: auto; min-width: 120px; }
+
+  /* Table */
+  .table-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  colgroup col:nth-child(1) { width: 20%; }
+  colgroup col:nth-child(2) { width: 9%; }
+  colgroup col:nth-child(3) { width: 7%; }
+  colgroup col:nth-child(4) { width: 7%; }
+  colgroup col:nth-child(5) { width: 6%; }
+  colgroup col:nth-child(6) { width: 11%; }
+  colgroup col:nth-child(7) { width: 10%; }
+  colgroup col:nth-child(8) { width: 10%; }
+  colgroup col:nth-child(9) { width: 20%; }
+  thead tr { background: var(--surface); border-bottom: 1px solid var(--border2); }
+  th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface2); }
+
+  /* Badges */
+  .tier { font-family: var(--mono); font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+  .tier-A { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(74,222,128,0.2); }
+  .tier-B { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(96,165,250,0.2); }
+  .tier-C { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .tier-dash { background: transparent; color: var(--muted); border: none; }
+
+  .status-badge {
+    font-size: 11px; padding: 3px 8px; border-radius: 20px; border: 1px solid var(--border2);
+    color: var(--muted); background: var(--surface2); cursor: pointer; white-space: nowrap;
+    transition: all 0.15s; display: inline-block;
+  }
+  .status-badge:hover { border-color: rgba(74,222,128,0.3); color: var(--accent); }
+  .status-Contacted { color: var(--amber); border-color: rgba(251,191,36,0.25); background: var(--amber-dim); }
+  .status-Replied { color: var(--blue); border-color: rgba(96,165,250,0.25); background: var(--blue-dim); }
+  .status-MeetingSet { color: #a78bfa; border-color: rgba(167,139,250,0.25); background: rgba(167,139,250,0.1); }
+  .status-ClosedWon { color: var(--accent); border-color: rgba(74,222,128,0.25); background: var(--accent-dim); }
+  .status-ClosedLost { color: var(--red); border-color: rgba(248,113,113,0.2); background: var(--red-dim); }
+
+  .del-btn { cursor: pointer; color: var(--muted); font-size: 16px; margin-left: 6px; line-height: 1; transition: color 0.15s; }
+  .del-btn:hover { color: var(--red); }
+
+  /* AI status */
+  #ai-status { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 13px; }
+  .empty-state p:first-child { font-size: 22px; margin-bottom: 8px; }
+
+  /* API key prompt */
+  .api-banner { background: var(--amber-dim); border: 1px solid rgba(251,191,36,0.2); border-radius: var(--radius); padding: 10px 16px; margin-bottom: 16px; font-size: 12px; color: var(--amber); display: flex; align-items: center; gap: 10px; }
+  .api-banner input { background: rgba(0,0,0,0.3); border-color: rgba(251,191,36,0.3); color: var(--text); font-family: var(--mono); font-size: 12px; flex: 1; }
+  .api-banner .btn { padding: 5px 12px; font-size: 12px; }
+
+  @media (max-width: 768px) {
+    main { padding: 16px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .form-grid.cols-5 { grid-template-columns: 1fr 1fr; }
+    .form-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+    header { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">solviq<span>.</span>leads</div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn" onclick="exportCSV()">↓ Export CSV</button>
+      <button class="btn danger" onclick="clearAll()">Clear all</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- API Key Banner -->
+    <div class="api-banner" id="api-banner">
+      <span>⚠ Anthropic API key required for batch AI research</span>
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." />
+      <button class="btn" onclick="saveApiKey()">Save</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Total leads</div>
+        <div class="stat-val" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">A tier</div>
+        <div class="stat-val a" id="stat-a">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">B tier</div>
+        <div class="stat-val b" id="stat-b">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">C tier</div>
+        <div class="stat-val c" id="stat-c">0</div>
+      </div>
+    </div>
+
+    <!-- Batch Research -->
+    <div class="panel">
+      <div class="panel-title">
+        Batch AI research
+        <span class="tag">paste hotel names → auto scores A/B/C</span>
+        <span id="ai-status" style="margin-left:auto;"></span>
+      </div>
+      <div class="form-grid cols-2" style="margin-bottom:10px;">
+        <textarea id="batch-input" placeholder="One hotel name per line:&#10;Kata Palm Resort &amp; Spa&#10;Lae Lay Suites&#10;Honey Resort&#10;Glitter House"></textarea>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div>
+            <label>District / location context</label>
+            <input type="text" id="batch-location" placeholder="e.g. Kata, Phuket" />
+          </div>
+          <button class="btn primary" onclick="batchResearch()" id="batch-btn" style="margin-top:auto;">Research &amp; score →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Add -->
+    <div class="panel">
+      <div class="panel-title">Add manually <span class="tag">for hotels where you already have the data</span></div>
+      <div class="form-grid cols-5" style="margin-bottom:10px;">
+        <div><label>Hotel name</label><input type="text" id="inp-name" placeholder="Kata Palm Resort" /></div>
+        <div><label>Location</label><input type="text" id="inp-loc" placeholder="Kata" /></div>
+        <div><label>Rating</label><input type="number" id="inp-rating" placeholder="4.2" min="0" max="5" step="0.1" /></div>
+        <div><label>Reviews</label><input type="number" id="inp-reviews" placeholder="120" min="0" /></div>
+        <div><label>Website?</label>
+          <select id="inp-web">
+            <option value="No">No</option>
+            <option value="Facebook">Facebook only</option>
+            <option value="Yes (poor)">Yes (poor)</option>
+            <option value="Yes (ok)">Yes (ok)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid cols-4">
+        <div><label>Phone</label><input type="text" id="inp-phone" placeholder="076 123 456" /></div>
+        <div><label>Booking platform</label><input type="text" id="inp-booking" placeholder="Agoda / N/A" /></div>
+        <div><label>Notes</label><input type="text" id="inp-notes" placeholder="Optional" /></div>
+        <button class="btn primary" onclick="addManual()" style="align-self:flex-end;">+ Add lead</button>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <input type="text" id="search-input" placeholder="Search by name or location..." oninput="renderTable()" />
+      <select id="filter-tier" onchange="renderTable()">
+        <option value="">All tiers</option>
+        <option value="A">A tier</option>
+        <option value="B">B tier</option>
+        <option value="C">C tier</option>
+      </select>
+      <select id="filter-status" onchange="renderTable()">
+        <option value="">All status</option>
+        <option value="New">New</option>
+        <option value="Contacted">Contacted</option>
+        <option value="Replied">Replied</option>
+        <option value="Meeting Set">Meeting Set</option>
+        <option value="Closed Won">Closed Won</option>
+        <option value="Closed Lost">Closed Lost</option>
+      </select>
+      <select id="filter-loc" onchange="renderTable()">
+        <option value="">All locations</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <colgroup><col><col><col><col><col><col><col><col><col></colgroup>
+        <thead>
+          <tr>
+            <th>Name</th><th>Location</th><th>Rating</th><th>Reviews</th>
+            <th>Tier</th><th>Phone</th><th>Website</th><th>Status</th><th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="lead-tbody"></tbody>
+      </table>
+      <div class="empty-state" id="empty-state">
+        <p>📋</p>
+        <p>No leads yet. Add manually or use batch research above.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+let leads = JSON.parse(localStorage.getItem('solviq-leads') || '[]');
+let nextId = (leads.length ? Math.max(...leads.map(l => l.id)) + 1 : 1);
+
+function save() { localStorage.setItem('solviq-leads', JSON.stringify(leads)); }
+
+function score(rating, reviews) {
+  const r = parseFloat(rating) || 0, n = parseInt(reviews) || 0;
+  if (r >= 4.0 && n >= 50) return 'A';
+  if (r >= 3.8 || n >= 20) return 'B';
+  return 'C';
+}
+
+// API key
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) return;
+  localStorage.setItem('solviq-apikey', key);
+  document.getElementById('api-banner').style.display = 'none';
+}
+function getApiKey() { return localStorage.getItem('solviq-apikey') || ''; }
+window.addEventListener('DOMContentLoaded', () => {
+  if (getApiKey()) document.getElementById('api-banner').style.display = 'none';
+  renderTable(); updateStats(); updateLocFilter();
+});
+
+function addManual() {
+  const name = document.getElementById('inp-name').value.trim();
+  if (!name) { document.getElementById('inp-name').focus(); return; }
+  const rating = document.getElementById('inp-rating').value;
+  const reviews = document.getElementById('inp-reviews').value;
+  leads.push({
+    id: nextId++, name,
+    location: document.getElementById('inp-loc').value.trim() || '—',
+    rating: rating || '—', reviews: reviews || '—',
+    tier: (rating && reviews) ? score(rating, reviews) : '—',
+    phone: document.getElementById('inp-phone').value.trim() || '—',
+    website: document.getElementById('inp-web').value,
+    booking: document.getElementById('inp-booking').value.trim() || '—',
+    status: 'New',
+    notes: document.getElementById('inp-notes').value.trim() || ''
+  });
+  ['inp-name','inp-loc','inp-rating','inp-reviews','inp-phone','inp-booking','inp-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('inp-web').value = 'No';
+  save(); renderTable(); updateStats(); updateLocFilter();
+}
+
+async function batchResearch() {
+  const raw = document.getElementById('batch-input').value.trim();
+  const loc = document.getElementById('batch-location').value.trim();
+  const apiKey = getApiKey();
+  if (!raw) return;
+  if (!apiKey) { document.getElementById('api-banner').style.display = 'flex'; return; }
+  const names = raw.split('\n').map(s => s.trim()).filter(Boolean);
+  const btn = document.getElementById('batch-btn');
+  const status = document.getElementById('ai-status');
+  btn.disabled = true; btn.textContent = 'Researching...';
+  status.textContent = `Looking up ${names.length} hotel(s)...`;
+
+  const prompt = `You are a hotel research assistant for Solviq, a web design service in Phuket. For each hotel below, search for: Google Maps rating, review count, phone number. Then score using: A = rating ≥4.0 AND reviews ≥50; B = rating ≥3.8 OR reviews ≥20; C = everything else. Use null if data unavailable.
+
+Location context: ${loc || 'Phuket, Thailand'}
+Hotels:
+${names.map((n,i) => `${i+1}. ${n}`).join('\n')}
+
+Reply ONLY with a valid JSON array, no markdown, no explanation:
+[{"name":"...","location":"...","rating":4.2,"reviews":150,"phone":"076 xxx xxx","website":"No","tier":"A","notes":"..."}]`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    parsed.forEach(h => {
+      leads.push({
+        id: nextId++, name: h.name || '—',
+        location: h.location || loc || '—',
+        rating: h.rating != null ? h.rating : '—',
+        reviews: h.reviews != null ? h.reviews : '—',
+        tier: h.tier || (h.rating != null && h.reviews != null ? score(h.rating, h.reviews) : '—'),
+        phone: h.phone || '—', website: h.website || 'No',
+        booking: h.booking || '—', status: 'New', notes: h.notes || ''
+      });
+    });
+    document.getElementById('batch-input').value = '';
+    status.textContent = `✓ Added ${parsed.length} lead(s)`;
+    setTimeout(() => status.textContent = '', 4000);
+    save(); renderTable(); updateStats(); updateLocFilter();
+  } catch(e) {
+    status.textContent = '✗ Error — check API key or try again';
+    console.error(e);
+  }
+  btn.disabled = false; btn.textContent = 'Research & score →';
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = leads.length;
+  document.getElementById('stat-a').textContent = leads.filter(l => l.tier === 'A').length;
+  document.getElementById('stat-b').textContent = leads.filter(l => l.tier === 'B').length;
+  document.getElementById('stat-c').textContent = leads.filter(l => l.tier === 'C').length;
+}
+
+function updateLocFilter() {
+  const locs = [...new Set(leads.map(l => l.location).filter(l => l !== '—'))].sort();
+  const sel = document.getElementById('filter-loc');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All locations</option>' + locs.map(l => `<option value="${l}"${l===cur?' selected':''}>${l}</option>`).join('');
+}
+
+const statusCycle = ['New','Contacted','Replied','Meeting Set','Closed Won','Closed Lost'];
+
+function cycleStatus(id) {
+  const lead = leads.find(l => l.id === id);
+  if (!lead) return;
+  lead.status = statusCycle[(statusCycle.indexOf(lead.status) + 1) % statusCycle.length];
+  save(); renderTable();
+}
+
+function deleteLead(id) {
+  if (!confirm('Delete this lead?')) return;
+  leads = leads.filter(l => l.id !== id);
+  save(); renderTable(); updateStats(); updateLocFilter();
+}
+
+function renderTable() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const tier = document.getElementById('filter-tier').value;
+  const statusF = document.getElementById('filter-status').value;
+  const loc = document.getElementById('filter-loc').value;
+  let filtered = leads.filter(l => {
+    if (search && !l.name.toLowerCase().includes(search) && !l.location.toLowerCase().includes(search)) return false;
+    if (tier && l.tier !== tier) return false;
+    if (statusF && l.status !== statusF) return false;
+    if (loc && l.location !== loc) return false;
+    return true;
+  });
+  const tbody = document.getElementById('lead-tbody');
+  const empty = document.getElementById('empty-state');
+  if (!filtered.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  const statusClass = s => 'status-' + s.replace(/\s/g,'');
+  tbody.innerHTML = filtered.map(l => `
+    <tr>
+      <td style="font-weight:500;" title="${l.name}">${l.name}</td>
+      <td style="color:var(--muted);" title="${l.location}">${l.location}</td>
+      <td style="font-family:var(--mono); text-align:center;">${l.rating}</td>
+      <td style="font-family:var(--mono); text-align:center;">${l.reviews}</td>
+      <td style="text-align:center;"><span class="tier tier-${l.tier === '—' ? 'dash' : l.tier}">${l.tier}</span></td>
+      <td style="color:var(--muted); font-size:12px;" title="${l.phone}">${l.phone}</td>
+      <td style="color:var(--muted); font-size:12px;" title="${l.website}">${l.website}</td>
+      <td><span class="status-badge ${statusClass(l.status)}" onclick="cycleStatus(${l.id})" title="Click to advance">${l.status}</span></td>
+      <td style="color:var(--muted); font-size:12px;">${l.notes || '—'}<span class="del-btn" onclick="deleteLead(${l.id})" title="Delete">×</span></td>
+    </tr>`).join('');
+}
+
+function exportCSV() {
+  if (!leads.length) return;
+  const h = ['Name','Location','Rating','Reviews','Tier','Phone','Website','Booking','Status','Notes'];
+  const rows = leads.map(l => [l.name,l.location,l.rating,l.reviews,l.tier,l.phone,l.website,l.booking,l.status,l.notes].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv = [h.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = `solviq_leads_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function clearAll() {
+  if (!leads.length || !confirm('Clear all leads? This cannot be undone.')) return;
+  leads = []; save(); renderTable(); updateStats(); updateLocFilter();
+}
+</script>
+</body>
+</html>
