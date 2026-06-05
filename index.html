@@ -162,8 +162,8 @@
   <main>
     <!-- API Key Banner -->
     <div class="api-banner" id="api-banner">
-      <span>⚠ Anthropic API key required for batch AI research</span>
-      <input type="password" id="api-key-input" placeholder="sk-ant-..." />
+      <span>⚠ OpenRouter API key required for batch AI research</span>
+      <input type="password" id="api-key-input" placeholder="sk-or-..." />
       <button class="btn" onclick="saveApiKey()">Save</button>
     </div>
 
@@ -343,18 +343,18 @@ Reply ONLY with a valid JSON array, no markdown, no explanation:
 [{"name":"...","location":"...","rating":4.2,"reviews":150,"phone":"076 xxx xxx","website":"No","tier":"A","notes":"..."}]`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        model: 'google/gemini-2.0-flash-exp:free',
+        max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
-    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    const text = data.choices[0].message.content;
     const clean = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
     parsed.forEach(h => {
