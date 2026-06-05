@@ -347,7 +347,7 @@ Reply ONLY with a valid JSON array, no markdown, no explanation:
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'meta-llama/llama-3.3-70b-instruct:free',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -373,7 +373,7 @@ Reply ONLY with a valid JSON array, no markdown, no explanation:
     setTimeout(() => status.textContent = '', 4000);
     save(); renderTable(); updateStats(); updateLocFilter();
   } catch(e) {
-    status.textContent = '✗ Error — check API key or try again';
+    status.textContent = `✗ ${e.message || 'Error — check API key or try again'}`;
     console.error(e);
   }
   btn.disabled = false; btn.textContent = 'Research & score →';
